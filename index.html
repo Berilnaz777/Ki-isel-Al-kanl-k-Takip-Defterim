@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alışkanlık Takip Defterim (Şifreli)</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#444}
+header{padding:28px 20px 22px;text-align:center;background:#f7d9e5}
+header h1{margin:0;font-size:30px}
+.tagline{text-align:center;font-size:17px;font-style:italic;margin:10px 0 18px;color:#777}
+nav{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px;background:#fff;border-bottom:1px solid #eee}
+nav button{border:0;border-radius:18px;padding:10px 16px;background:#f1f1f1;color:#555;cursor:pointer}
+nav button:hover{opacity:.8}
+.page{display:none;min-height:calc(100vh - 130px);padding:28px 18px 70px}
+.page.active{display:block}
+.page.pink{border-top:18px solid #f3c6d8;border-bottom:18px solid #f3c6d8}
+.page.green{border-top:18px solid #cde8d2;border-bottom:18px solid #cde8d2}
+.page.blue{border-top:18px solid #c9def4;border-bottom:18px solid #c9def4}
+.page.lilac{border-top:18px solid #ddd0ef;border-bottom:18px solid #ddd0ef}
+h2{text-align:center;margin:5px 0 25px}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;max-width:900px;margin:auto}
+.item{aspect-ratio:1;border:1px solid #e4e4e4;border-radius:10px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;position:relative}
+.item:hover{transform:scale(1.04);box-shadow:0 2px 8px #ddd}
+.water{font-size:27px;background:#fff}
+.water.selected{background:#fff;border-color:#8fc5f5}
+.water.selected::first-line{color:#3b9bea}
+.glass{font-size:29px;color:#2997e8;filter:saturate(1.5)}
+.water.selected .glass{color:#1688df}
+.book{font-size:30px;overflow:hidden}.book.has-cover{background-size:cover;background-position:center;background-repeat:no-repeat;color:transparent}.book.has-cover::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.03)}
+.book.read{background:#dff0df}
+
+.study{
+  background:#fff;
+  border:2px solid #e0d5f2;
+  border-radius:8px;
+  font-size:24px;
+  color:transparent;
+  user-select:none;
+}
+.study.marked{
+  background:#f2ebfa;
+  border-color:#bda6e0;
+  color:#6b469b;
+}
+.study.done{
+  background:#d8c3f0;
+  border-color:#9268c2;
+  color:#4a237a;
+}
+
+.info{text-align:center;color:#777;margin-bottom:20px}
+footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;text-align:center;padding:8px;font-size:12px;color:#999}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:15px;z-index:10}
+.modal.open{display:flex}
+.modal-box{background:white;width:min(520px,100%);max-height:90vh;overflow:auto;border-radius:20px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.modal-box h3{margin-top:0}
+label{display:block;margin:12px 0 5px;font-weight:bold}
+input,textarea,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit}
+.delete-btn{width:100%;margin-top:10px;padding:11px;border:0;border-radius:12px;background:#f4d1d1;color:#9b4545;cursor:pointer;font-weight:bold}
+.upload-label{display:block;width:100%;padding:12px;border-radius:12px;background:#f1f1f1;cursor:pointer;text-align:center;font-weight:normal}
+#coverFile{display:none}
+textarea{min-height:100px;resize:vertical}
+.actions{display:flex;gap:10px;margin-top:18px}
+.actions button{flex:1;padding:11px;border:0;border-radius:12px;cursor:pointer}
+.save{background:#d8eadb}.cancel{background:#eee}
+.stars{display:flex;gap:5px;font-size:28px;cursor:pointer}
+.stars span{color:#ddd}.stars span.on{color:#f1c75b}
+.cover-area{text-align:center}
+.cover-preview{width:110px;height:145px;object-fit:cover;border-radius:8px;background:#f3f3f3;margin:8px auto;display:block}
+.user-bar{display:flex;justify-content:center;gap:8px;align-items:center;padding:10px;background:#fafafa}
+.user-bar button{border:0;background:#eee;border-radius:10px;padding:7px 10px;cursor:pointer}
+@media(max-width:600px){.grid{gap:5px}.item{border-radius:6px}.water,.book,.study{font-size:18px}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Alışkanlık Takip Defterim 🌷</h1>
+</header>
+
+<div class="user-bar">
+  <span id="userStatus">Giriş Yapılmadı</span>
+  <button id="loginBtnNav" onclick="openLogin()">Kullanıcı Girişi / Kayıt</button>
+  <button id="logoutBtnNav" style="display:none;" onclick="logout()">Çıkış Yap</button>
+</div>
+
+<nav>
+  <button onclick="showPage('home')">Ana Sayfa</button>
+  <button onclick="showPage('books')">📚 Kitap Okuma</button>
+  <button onclick="showPage('water')">💧 Su İçme</button>
+  <button onclick="showPage('study')">📖 Ders Çalışma</button>
+</nav>
+
+<section id="home" class="page pink active">
+  <h2>Hoş Geldin 🌸</h2>
+  <p class="tagline">Küçük adımlarla büyük değişikliklere.</p>
+  <p class="info">Günlük alışkanlıklarını ve çalışmalarını güvenle takip edebilirsin.</p>
+  <div style="max-width:700px;margin:auto;text-align:center;line-height:2">
+    <p>📚 Okuduğun kitapları kaydet.</p>
+    <p>💧 İçtiğin suyu takip et.</p>
+    <p>📝 Ders çalışma sayfalarını doldur.</p>
+  </div>
+</section>
+
+<section id="books" class="page green">
+  <h2>Kitap Okuma 📚</h2>
+  <p class="info">Bir kitaba dokunarak kapağını ekle ve ikinci dokunuşta ayrıntılarını kaydet.</p>
+  <div id="bookGrid" class="grid"></div>
+</section>
+
+<section id="water" class="page blue">
+  <h2>Su İçme 💧</h2>
+  <p class="info">Bir bardağa ilk dokunuşta işaretlenir, ikinci dokunuşta miktarı girilir.</p>
+  <div id="waterGrid" class="grid"></div>
+</section>
+
+<section id="study" class="page lilac">
+  <h2>Ders Çalışma Takibi 📝</h2>
+  <p class="info">Boş kağıda ilk tıklayışta yazılar belirir. İkinci tıklayışta ders detayları açılır.</p>
+  <div id="studyGrid" class="grid"></div>
+</section>
+
+<div id="loginModal" class="modal">
+ <div class="modal-box">
+  <h3>Kullanıcı Girişi / Kayıt 🔐</h3>
+  <p class="info">İsminizi ve şifrenizi giriniz. İlk kez giriyorsanız belirlediğiniz şifre kaydedilir.</p>
+  <label>Kullanıcı Adı</label>
+  <input id="userNameInput" type="text" maxlength="30" placeholder="Örn. Beril">
+  <label>Şifre</label>
+  <input id="userPassInput" type="password" maxlength="30" placeholder="Şifreniz">
+  <div class="actions">
+   <button class="cancel" type="button" onclick="closeModal('loginModal')">İptal</button>
+   <button class="save" type="button" onclick="handleAuth()">Giriş Yap / Kaydet</button>
+  </div>
+ </div>
+</div>
+
+<div id="waterModal" class="modal">
+ <div class="modal-box">
+  <h3>Su Miktarı 💧</h3>
+  <label>İçtiğin su miktarı (ml)</label>
+  <input id="waterAmount" type="number" min="0" placeholder="Örn. 250">
+  <div class="actions">
+   <button class="cancel" type="button" onclick="closeModal('waterModal')">İptal</button>
+   <button class="save" type="button" onclick="saveWater()">Kaydet</button>
+  </div>
+  <button class="delete-btn" type="button" onclick="deleteEntry('water')">Sil</button>
+ </div>
+</div>
+
+<div id="bookModal" class="modal">
+ <div class="modal-box">
+  <h3>Kitap Bilgileri 📚</h3>
+  <div class="cover-area">
+   <img id="coverPreview" class="cover-preview" alt="Kitap kapağı">
+   <label class="upload-label" for="coverFile">Resminizi yükleyin</label>
+   <input id="coverFile" type="file" accept="image/*" onchange="previewCover(event)">
+  </div>
+  <label>Kitabın adı</label>
+  <input id="bookTitle" placeholder="Kitap adı">
+  <label>Okumaya başlama tarihi</label>
+  <input id="bookStart" type="date">
+  <label>Bitirme tarihi</label>
+  <input id="bookEnd" type="date">
+  <label>Puanım</label>
+  <div id="stars" class="stars">
+   <span onclick="setRating(1)">★</span><span onclick="setRating(2)">★</span>
+   <span onclick="setRating(3)">★</span><span onclick="setRating(4)">★</span>
+   <span onclick="setRating(5)">★</span>
+  </div>
+  <label>Notlar</label>
+  <textarea id="bookNotes" placeholder="Kitap hakkındaki yorumun..."></textarea>
+  <div class="actions">
+   <button class="cancel" type="button" onclick="closeModal('bookModal')">İptal</button>
+   <button class="save" type="button" onclick="saveBook()">Kaydet</button>
+  </div>
+  <button class="delete-btn" type="button" onclick="deleteEntry('book')">Sil</button>
+ </div>
+</div>
+
+<div id="studyModal" class="modal">
+ <div class="modal-box">
+  <h3>Ders Çalışma Bilgileri 📝</h3>
+  <label>Ne kadar çalıştın?</label>
+  <input id="studyDuration" placeholder="Örn. 1 saat 30 dakika">
+  <label>Ne çalıştın?</label>
+  <input id="studySubject" placeholder="Örn. Analiz 2 - İntegraller">
+  <label>Notlar</label>
+  <textarea id="studyNotes" placeholder="Kısa not..."></textarea>
+  <div class="actions">
+   <button class="cancel" type="button" onclick="closeModal('studyModal')">İptal</button>
+   <button class="save" type="button" onclick="saveStudy()">Kaydet</button>
+  </div>
+  <button class="delete-btn" type="button" onclick="deleteEntry('study')">Sil</button>
+ </div>
+</div>
+
+<footer>Berilnaz Karabağ tarafından üretilmiştir.</footer>
+
+<script>
+let currentUser = sessionStorage.getItem("currentAuthUser") || "";
+let activeIndex = null;
+let rating = 0;
+
+function userKey(type){
+ return "tracker_passuser_" + currentUser.toLowerCase().trim() + "_" + type;
+}
+
+function load(type){
+ if(!currentUser) return {};
+ try { return JSON.parse(localStorage.getItem(userKey(type))) || {}; }
+ catch(e) { return {}; }
+}
+
+function save(type, data){
+ if(!currentUser) return;
+ localStorage.setItem(userKey(type), JSON.stringify(data));
+}
+
+function requireLogin(){
+ if(!currentUser){ openLogin(); return false; }
+ return true;
+}
+
+function updateUser(){
+ const statusSpan = document.getElementById("userStatus");
+ const logoutBtn = document.getElementById("logoutBtnNav");
+
+ if(currentUser){
+   statusSpan.textContent = "Merhaba, " + currentUser + " 🔒";
+   if(logoutBtn) logoutBtn.style.display = "inline-block";
+ } else {
+   statusSpan.textContent = "Giriş yapılmadı";
+   if(logoutBtn) logoutBtn.style.display = "none";
+ }
+}
+
+function openLogin(){
+ document.getElementById("userNameInput").value = currentUser || "";
+ document.getElementById("userPassInput").value = "";
+ document.getElementById("loginModal").classList.add("open");
+}
+
+function handleAuth(){
+ const name = document.getElementById("userNameInput").value.trim();
+ const pass = document.getElementById("userPassInput").value.trim();
+
+ if(!name || !pass){ alert("Lütfen hem adınızı hem de şifrenizi giriniz."); return; }
+
+ const passKey = "tracker_pwd_" + name.toLowerCase();
+ const savedPass = localStorage.getItem(passKey);
+
+ if(!savedPass){
+   localStorage.setItem(passKey, pass);
+   alert("Kullanıcı oluşturuldu ve şifreniz kaydedildi!");
+ } else if(savedPass !== pass){
+   alert("Hatalı şifre! Lütfen tekrar deneyiniz.");
+   return;
+ }
+
+ currentUser = name;
+ sessionStorage.setItem("currentAuthUser", name);
+ updateUser();
+ closeModal("loginModal");
+ renderAll();
+}
+
+function logout(){
+ currentUser = "";
+ sessionStorage.removeItem("currentAuthUser");
+ updateUser();
+ renderAll();
+ openLogin();
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove("open"); }
+
+function showPage(id){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+}
+
+function createGrid(id,type,icon){
+ const grid=document.getElementById(id);
+ if(!grid) return;
+ grid.innerHTML="";
+ for(let i=0;i<100;i++){
+  const d=document.createElement("div");
+  d.className="item "+type;
+  d.dataset.index=i;
+  d.innerHTML=icon;
+  d.onclick=()=>handleClick(type,i,d);
+  grid.appendChild(d);
+ }
+ applySaved(type);
+}
+
+function applySaved(type){
+ if(!currentUser) return;
+ const data=load(type);
+ const gridId = (type==="water"?"waterGrid":type==="book"?"bookGrid":"studyGrid");
+ document.querySelectorAll("#"+gridId+" .item").forEach((el,i)=>{
+   if(data[i]){
+    if(type==="water" && data[i].amount!=null) el.classList.add("selected");
+    if(type==="book" && (data[i].title||data[i].cover)){
+      el.classList.add("read");
+      if(data[i].cover){
+        el.classList.add("has-cover");
+        el.style.backgroundImage = 'url("' + data[i].cover.replace(/"/g, '&quot;') + '")';
+        el.textContent = "";
+      }
+    }
+    if(type==="study"){
+      if(data[i].status === "marked"){
+        el.classList.add("marked");
+      } else if(data[i].status === "done" || data[i].duration || data[i].subject){
+        el.classList.add("done");
+      }
+    }
+   }
+ });
+}
+
+function handleClick(type,i,el){
+ if(!requireLogin()) return;
+
+ if(type === "water"){
+   if(!el.classList.contains("selected")){
+     el.classList.add("selected");
+   } else {
+     openWater(i);
+   }
+ } else if(type === "book"){
+   if(!el.classList.contains("read")){
+     openBook(i);
+   } else {
+     openBook(i);
+   }
+ } else if(type === "study"){
+   const data = load("study");
+   const current = data[i] || {};
+
+   if(!current.status){
+     const d = {...data, [i]: { status: "marked" }};
+     save("study", d);
+     el.classList.add("marked");
+   } 
+   else {
+     openStudy(i);
+   }
+ }
+}
+
+function openWater(i){
+ activeIndex=i;
+ const d=load("water")[i]||{};
+ document.getElementById("waterAmount").value=d.amount||"";
+ document.getElementById("waterModal").classList.add("open");
+}
+function saveWater(){
+ const amount=Number(document.getElementById("waterAmount").value);
+ if(!amount){alert("Su miktarını gir.");return}
+ const d=load("water");d[activeIndex]={amount,date:new Date().toISOString()};
+ save("water",d);closeModal("waterModal");renderAll();
+}
+
+function openBook(i){
+ activeIndex=i;
+ const d=load("book")[i]||{};
+ document.getElementById("bookTitle").value=d.title||"";
+ document.getElementById("bookStart").value=d.start||"";
+ document.getElementById("bookEnd").value=d.end||"";
+ document.getElementById("bookNotes").value=d.notes||"";
+ document.getElementById("coverFile").value="";
+ document.getElementById("coverPreview").src=d.cover||"";
+ setRating(d.rating||0);
+ document.getElementById("bookModal").classList.add("open");
+}
+function previewCover(event){
+ const file=event.target.files[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=function(e){
+   document.getElementById("coverPreview").src=e.target.result;
+ };
+ reader.readAsDataURL(file);
+}
+function setRating(n){
+ rating=n;
+ document.querySelectorAll("#stars span").forEach((s,i)=>s.classList.toggle("on",i<n));
+}
+function saveBook(){
+ const title=document.getElementById("bookTitle").value.trim();
+ if(!title){alert("Kitabın adını gir.");return}
+ const d=load("book");
+ d[activeIndex]={
+  title,start:document.getElementById("bookStart").value,
+  end:document.getElementById("bookEnd").value,
+  rating,notes:document.getElementById("bookNotes").value,
+  cover:document.getElementById("coverPreview").src || ""
+ };
+ save("book",d);closeModal("bookModal");renderAll();
+}
+
+function openStudy(i){
+ activeIndex=i;
+ const d=load("study")[i]||{};
+ document.getElementById("studyDuration").value=d.duration||"";
+ document.getElementById("studySubject").value=d.subject||"";
+ document.getElementById("studyNotes").value=d.notes||"";
+ document.getElementById("studyModal").classList.add("open");
+}
+function saveStudy(){
+ const duration=document.getElementById("studyDuration").value.trim();
+ const subject=document.getElementById("studySubject").value.trim();
+ if(!duration && !subject){alert("Çalışma bilgilerini gir.");return}
+ const d=load("study");
+ d[activeIndex]={
+   status: "done",
+   duration,
+   subject,
+   notes:document.getElementById("studyNotes").value,
+   date:new Date().toISOString()
+ };
+ save("study",d);closeModal("studyModal");renderAll();
+}
+
+function deleteEntry(type){
+ if(activeIndex===null)return;
+ const labels={water:"su kaydını",book:"kitap kaydını",study:"ders çalışma kaydını"};
+ if(!confirm("Bu "+labels[type]+" silmek istediğine emin misin?"))return;
+ const d=load(type);
+ delete d[activeIndex];
+ save(type,d);
+ const modal={water:"waterModal",book:"bookModal",study:"studyModal"}[type];
+ closeModal(modal);
+ renderAll();
+ activeIndex=null;
+}
+
+function renderAll(){
+ createGrid("waterGrid","water",'<span class="glass">💧</span>');
+ createGrid("bookGrid","book","📕");
+ createGrid("studyGrid","study","📝");
+ updateUser();
+}
+
+renderAll();
+
+if(!currentUser){
+ openLogin();
+}
+</script>
+</body>
+</html>
